@@ -32,8 +32,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(authenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .formLogin()
-                .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
     }
