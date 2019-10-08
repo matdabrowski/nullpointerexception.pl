@@ -1,5 +1,6 @@
 package pl.nullpointerexception.securityexample.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -7,20 +8,27 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity(debug = false)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private RestAuthenticationSuccessHandler authenticationSuccessHandler;
-    private RestAuthenticationFailureHandler authenticationFailureHandler;
+    private final RestAuthenticationSuccessHandler authenticationSuccessHandler;
+    private final RestAuthenticationFailureHandler authenticationFailureHandler;
+    private final UserDetailsManager userDetailsManager;
+    private final String secret;
 
     public SecurityConfig(RestAuthenticationSuccessHandler authenticationSuccessHandler,
-                          RestAuthenticationFailureHandler authenticationFailureHandler) {
+                          RestAuthenticationFailureHandler authenticationFailureHandler,
+                          UserDetailsManager userDetailsManager,
+                          @Value("${jwt.secret}") String secret) {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
+        this.userDetailsManager = userDetailsManager;
+        this.secret = secret;
     }
 
     @Override
@@ -31,9 +39,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(authenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .formLogin()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
+                .addFilter(authenticationFilter())
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userDetailsManager, secret))
                 .exceptionHandling()
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
     }
