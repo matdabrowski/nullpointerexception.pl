@@ -41,7 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         JsonObjectAuthenticationFilter filter = new JsonObjectAuthenticationFilter();
         filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         filter.setAuthenticationFailureHandler(authenticationFailureHandler);
-        filter.setAuthenticationManager(super.authenticationManagerBean());
+        filter.setAuthenticationManager(super.authenticationManager());
         return filter;
     }
 

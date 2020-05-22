@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
@@ -18,16 +19,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final RestAuthenticationSuccessHandler authenticationSuccessHandler;
     private final RestAuthenticationFailureHandler authenticationFailureHandler;
-    private final UserDetailsManager userDetailsManager;
     private final String secret;
 
     public SecurityConfig(RestAuthenticationSuccessHandler authenticationSuccessHandler,
                           RestAuthenticationFailureHandler authenticationFailureHandler,
-                          UserDetailsManager userDetailsManager,
                           @Value("${jwt.secret}") String secret) {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
-        this.userDetailsManager = userDetailsManager;
         this.secret = secret;
     }
 
@@ -42,7 +40,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilter(authenticationFilter())
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userDetailsManager, secret))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), super.userDetailsService(), secret))
                 .exceptionHandling()
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
     }
@@ -52,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         JsonObjectAuthenticationFilter filter = new JsonObjectAuthenticationFilter();
         filter.setAuthenticationSuccessHandler(authenticationSuccessHandler);
         filter.setAuthenticationFailureHandler(authenticationFailureHandler);
-        filter.setAuthenticationManager(super.authenticationManagerBean());
+        filter.setAuthenticationManager(super.authenticationManager());
         return filter;
     }
 
